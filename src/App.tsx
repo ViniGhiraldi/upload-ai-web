@@ -8,13 +8,29 @@ import { Slider } from './components/ui/slider';
 import { VideoInputForm } from './components/video-input-form';
 import { PromptSelect } from './components/prompt-select';
 import { useState } from 'react';
+import { useCompletion } from 'ai/react';
 
 export function App() {
   const [temperature, setTemperature] = useState(0.5);
+  const [videoId, setVideoId] = useState<string | null>(null);
 
-  function handlePromptSelected(template: string){
-    console.log(template);
-  }
+  const {
+    input,
+    setInput,
+    handleInputChange,
+    handleSubmit,
+    completion,
+    isLoading
+  } = useCompletion({
+    api: 'http://localhost:3333/ai/complete',
+    body: {
+      videoId,
+      temperature,
+    },
+    headers: {
+      'Content-type': 'application/json'
+    }
+  })
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -26,9 +42,11 @@ export function App() {
 
           <Separator orientation='vertical' className='h-6'/>
 
-          <Button variant='outline'>
-            <Github className="w-4 h-4 mr-2"/>
-            Github
+          <Button variant='outline' className='p-0 h-full '>
+            <a href="https://github.com/vinighiraldi" target='_blank' className='flex items-center h-9 px-4 py-2'>
+              <Github className="w-4 h-4 mr-2"/>
+              Github
+            </a>
           </Button>
         </div>
       </div>
@@ -39,11 +57,14 @@ export function App() {
             <Textarea
               className="resize-none p-4 leading-relaxed"
               placeholder="Inclua o prompt para a IA..."
+              value={input}
+              onChange={handleInputChange}
             />
             <Textarea
               className="resize-none p-4 leading-relaxed"
               placeholder="Resultado gerado pela IA..."
               readOnly
+              value={completion}
             />
           </div>
 
@@ -52,15 +73,15 @@ export function App() {
           </p>
         </div>
         <aside className='w-80 space-y-6'>
-          <VideoInputForm/>
+          <VideoInputForm onVideoUploaded={setVideoId}/>
 
           <Separator/>
 
-          <form className='space-y-6'>
+          <form onSubmit={handleSubmit} className='space-y-6'>
           <div className='space-y-2'>
               <Label>Prompt</Label>
 
-              <PromptSelect onPromptSelected={handlePromptSelected}/>
+              <PromptSelect onPromptSelected={setInput}/>
 
             </div>
             <div className='space-y-2'>
@@ -96,7 +117,7 @@ export function App() {
 
             <Separator/>
 
-            <Button type="submit" className='w-full'>
+            <Button disabled={isLoading} type="submit" className='w-full'>
               Executar
               <Wand2 className='w-4 h-4 ml-2'/>
             </Button>

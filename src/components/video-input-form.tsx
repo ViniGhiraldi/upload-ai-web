@@ -3,7 +3,7 @@ import { Separator } from "./ui/separator";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getFFmpeg } from "@/lib/ffmpeg";
 import { fetchFile } from '@ffmpeg/util';
 import { api } from "@/lib/axios";
@@ -17,11 +17,23 @@ const statusMessages = {
   success: 'Sucesso!'
 }
 
-export function VideoInputForm(){
+interface VideoInputFormProps{
+  onVideoUploaded: (id: string) => void;
+}
+
+export function VideoInputForm(props: VideoInputFormProps){
     const [videoFile, setVideoFile] = useState<File | null>(null);
     const [status, setStatus] = useState<Status>('waiting');
 
     const promptInputRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+      if(status === 'success'){
+        setTimeout(() => {
+          setStatus('waiting');
+        }, 3000)
+      }
+    }, [status])
     
     function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>){
         const { files } = e.currentTarget;
@@ -94,6 +106,8 @@ export function VideoInputForm(){
       await api.post(`/videos/${videoId}/transcription`, {prompt});
 
       setStatus('success')
+
+      props.onVideoUploaded(videoId);
     }
 
     const previewURL = useMemo(() => {
